@@ -10,7 +10,7 @@ class Post {
     public $author;
     public $created_at;
 
-    public $update_at;
+    public $updated_at;
 
     public function __construct($db) {
         $this->conn = $db;
@@ -19,7 +19,7 @@ class Post {
 
     //method pour obtenir tous les posts 
     public function read() {
-        $query = 'SELECT * FROM ' . $this->table;
+        $query = " SELECT * FROM " . $this->table;
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt;
@@ -27,46 +27,52 @@ class Post {
 
         //method pour obtenir un seul post avec id
         public function read_single($id){
-            $query = 'SELECT * FROM' ; $this-> table . 'WHERE id = ? ';
+            $query = " SELECT * FROM " . $this->table . " WHERE id = ?";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(1,$id);
             $stmt->execute();
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-
+            print_r($id);
             if ($row) {
                 $this->id = $row['id'];
                 $this->title = $row['title'];
                 $this->body = $row['body'];
                 $this->author = $row['created_at'];
-                $this->update_at = $row['update_at'];
-
+                $this->updated_at = $row['updated_at'];
+            } else {
+                $this->id = null;
             }
         }
 
         //method pour crée un nuveau post 
         public function create() {
-            $query = 'INSERT INTO' . $this->table . 'SET title = :title, body = :body, author= :author';
+            // Prépare la requête SQL
+            $query = "INSERT INTO posts (title, body, author) VALUES (:title, :body, :author)";
+        
+            // Prépare la déclaration préparée de la requête
             $stmt = $this->conn->prepare($query);
-
-            //Eviter les injection sql et trié les donnes 
+        
+            // Nettoie et associe les paramètres
             $this->title = htmlspecialchars(strip_tags($this->title));
             $this->body = htmlspecialchars(strip_tags($this->body));
             $this->author = htmlspecialchars(strip_tags($this->author));
-
-            //bind des parametres 
-            $stmt->bindParam(':title',$this->title);
+        
+            // Lie les paramètres
+            $stmt->bindParam(':title', $this->title);
             $stmt->bindParam(':body', $this->body);
-            $stmt->bindParam('author', $this->author);
-
-            if ($stmt->execute()) {
+            $stmt->bindParam(':author', $this->author);
+        
+            // Exécute la requête
+            if($stmt->execute()) {
                 return true;
-                
             }
-            //afficher un error si la creation echoue
-            printf("Error: %s.\n", $stmt->error);
-
-        return false;
+        
+            // Si cela échoue, affiche un message d'erreur
+            printf("Erreur : %s.\n", $stmt->error);
+        
+            return false;
         }
+        
 
         //method pour mettre a jour un post 
         public function update($id){
